@@ -4,9 +4,9 @@ from django.forms.widgets import CheckboxInput, FILE_INPUT_CONTRADICTION
 from django.forms.widgets import Input
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.utils.html import escape, conditional_escape
-from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.utils.datastructures import MultiValueDict, MergeDict
+from django.utils.datastructures import MultiValueDict
+import mergedict
 from django.core.exceptions import ValidationError
 # Provide this import for backwards compatibility.
 from django.core.validators import EMPTY_VALUES
@@ -19,14 +19,14 @@ class MultiFileInput(Input):
     input_type = 'file'
     needs_multipart_form = True
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         if attrs is None:
             attrs = {}
 
         name += '[]'
         attrs['multiple'] = 'multiple'
 
-        return super(MultiFileInput, self).render(name, None, attrs=attrs)
+        return super(MultiFileInput, self).render(name, None, attrs=attrs,renderer=None)
 
     def value_from_datadict(self, data, files, name):
         """
@@ -34,12 +34,12 @@ class MultiFileInput(Input):
         we need to add [] because it's from w3c recommendation
         """
         name += '[]'
-        if isinstance(files, (MultiValueDict, MergeDict)):
+        if isinstance(files, (MultiValueDict, mergedict)):
             return files.getlist(name)
         return files.get(name, None)
 
     def _has_changed(self, initial, data):
-        print data
+        print (data)
         if data is None:
             return False
         return True
@@ -67,7 +67,7 @@ class ClearableMultiFileInput(MultiFileInput):
         """
         return name + '_id'
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         substitutions = {
             'initial_text': self.initial_text,
             'input_text': self.input_text,
@@ -76,7 +76,7 @@ class ClearableMultiFileInput(MultiFileInput):
         }
         input_template = '%(input)s'
         init_template = ''
-        substitutions['input'] = super(ClearableMultiFileInput, self).render(name, value, attrs)
+        substitutions['input'] = super(ClearableMultiFileInput, self).render(name, value, attrs, renderer=None)
         if value is not None:
             # for validation empty value
             for i, file in enumerate(value):
@@ -84,13 +84,13 @@ class ClearableMultiFileInput(MultiFileInput):
                     template = self.template_with_initial
                     substitutions['initial'] = ('<a href="%s">%s</a>&nbsp;'
                                                            % (escape(file.url),
-                                                              escape(force_unicode(file))))
+                                                              escape(str(file))))
                     if self.is_required or len(value) > 1:
                         checkbox_name = self.clear_checkbox_name(i, name)
                         checkbox_id = self.clear_checkbox_id(checkbox_name)
                         substitutions['clear_checkbox_name'] = conditional_escape(checkbox_name)
                         substitutions['clear_checkbox_id'] = conditional_escape(checkbox_id)
-                        substitutions['clear'] = CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id})
+                        substitutions['clear'] = CheckboxInput().render(checkbox_name, False, attrs={'id': checkbox_id},renderer=None)
                         substitutions['clear_template'] = self.template_with_clear % substitutions
                 init_template += (template % substitutions)
             init_template += '<input type="hidden" value="%s" name="total_files">' % len(value)
@@ -122,7 +122,7 @@ class ClearableMultiFileInput(MultiFileInput):
     def _get_clear_list(self, data, files, name):
         pattern = re.compile('%s-\d+-clear' % name)
         clear = []
-        for key, value in data.iteritems():
+        for key, value in data.items():
             if pattern.match(key) and value == 'on':
                 clear.append(key)
         return clear

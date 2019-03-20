@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import copy
-from django.utils import simplejson
+import simplejson
 from django.utils.text import capfirst
-from forms import MultiFileField as MultiFileUploadField, ClearableMultiFileInput
+from multifilefield.forms import MultiFileField as MultiFileUploadField, ClearableMultiFileInput
 from django.db.models.fields.files import FileField, FieldFile
 from django.core.files.base import File
 from django.core.validators import EMPTY_VALUES
@@ -58,7 +58,7 @@ class MultiFileDescriptor(object):
         # handle None.
         if files not in EMPTY_VALUES:
             for file in files:
-                if isinstance(file, basestring):
+                if isinstance(file, str):
                     attr = self.field.attr_class(instance, self.field, file)
                     files_instance.append(attr)
 
@@ -109,7 +109,7 @@ class MultiFileField(FileField):
             return None
         unicode_values = []
         for file in value:
-            unicode_values.append(unicode(file))
+            unicode_values.append(str(file))
         return simplejson.dumps(unicode_values)
 
     def pre_save(self, model_instance, add):
