@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='django-multifilefield',
-    version='0.9',
+    version='2.0.0',
     description='Django model and form fields for storring html5 forms multiupload data',
     author='Sergey Maltsev',
     author_email='alternativshik@gmail.com',
